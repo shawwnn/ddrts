@@ -9,8 +9,7 @@ class RoutingHistory(models.Model):
     ACTION_CHOICES = [
         ('route', 'Route'),
         ('ack', 'Acknowledge'),
-        ('cancel', 'Cancel'),
-        ('override', 'Override'),
+        ('reject', 'Reject/No Documents Received'),
     ]
 
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
@@ -35,4 +34,4 @@ class RoutingHistory(models.Model):
 
     remarks = models.TextField(blank=True, null=True)
 
-    timestamp = models.DateTimeField(auto_now_add=True)
+    routed_at = models.DateTimeField(auto_now_add=True)

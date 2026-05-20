@@ -11,7 +11,7 @@ class Department(models.Model):
         return self.name
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     department = models.ForeignKey(Department, on_delete=models.PROTECT)
 
     def __str__(self):
