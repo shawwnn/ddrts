@@ -9,6 +9,7 @@
             <th>Current Dept</th>
             <th>Last Action</th>
             <th>Last From Dept</th>
+            <th>Last To Dept</th>
             <th>Last Date of Activity</th>
 
             <th>Status</th>
@@ -44,6 +45,10 @@
 
             <td>
                 {{ doc.last_from_department|default:"—" }}
+            </td>
+
+            <td>
+                {{ doc.last_to_department|default:"—" }}
             </td>
 
             <td>

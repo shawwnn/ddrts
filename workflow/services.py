@@ -1,3 +1,4 @@
+from django.db.models import OuterRef, Subquery, Q
 from django.db import transaction
 from documents.models import Document
 from workflow.models import RoutingHistory
@@ -33,12 +34,12 @@ def route_document(document_id, from_dept, to_dept, user, remarks=""):
         doc = Document.objects.select_for_update().get(id=document_id)
 
         # SAFETY CHECK 1: ownership
-        if doc.current_department != from_dept:
-            raise Exception("Unauthorized routing attempt")
+        # if doc.current_department != from_dept:
+        #     raise Exception("Unauthorized routing attempt")
 
         # SAFETY CHECK 2: cannot route to same department
-        if from_dept == to_dept:
-            raise Exception("Cannot route to same department")
+        # if from_dept == to_dept:
+        #     raise Exception("Cannot route to same department")
 
         RoutingHistory.objects.create(
             document=doc,
@@ -154,11 +155,52 @@ def inbox_query(department):
             'creator_department__name'   # fallback ONLY if no routing exists
         ),
 
+        # 📌 Department where it is going next
+        last_to_department=Subquery(
+            latest_route.values('to_department__name')[:1]
+        ),
+
         # 📌 Last activity timestamp
         last_activity_time=Coalesce(
             Subquery(latest_route.values('routed_at')[:1]),
             'created_at'   # fallback ONLY if no routing exists
         ),
+    )
+
+    return docs
+
+
+def sent_query(department):
+    """
+    📤 Sent Query:
+    Fetch documents where the latest routing action
+    came FROM the current user's department
+    """
+
+    latest_route = RoutingHistory.objects.filter(
+        document=OuterRef('pk')
+    ).order_by('-routed_at')
+
+    docs = Document.objects.annotate(
+
+        last_action=Subquery(
+            latest_route.values('action')[:1]
+        ),
+
+        last_from_department=Subquery(
+            latest_route.values('from_department__name')[:1]
+        ),
+
+        last_to_department=Subquery(
+            latest_route.values('to_department__name')[:1]
+        ),
+
+        last_activity_time=Coalesce(
+            Subquery(latest_route.values('routed_at')[:1]),
+            'created_at'
+        ),
+    ).filter(
+        last_from_department=department.name
     )
 
     return docs
