@@ -3,6 +3,29 @@ from documents.models import Document
 from workflow.models import RoutingHistory
 from django.contrib.auth.models import User
 from django.db.models import OuterRef, Subquery
+from django.db.models.functions import Coalesce
+
+# def create_and_route_document(user, title, from_dept, to_dept):
+#     doc = Document.objects.create(
+#         title=title,
+#         created_by=user,
+#         current_department=from_dept
+#     )
+
+#     RoutingHistory.objects.create(
+#         document=doc,
+#         from_department=from_dept,
+#         to_department=to_dept,
+#         action="route",
+#         performed_by=user,
+#         remarks="FAA"
+#     )
+
+#     doc.current_department = to_dept
+#     doc.save()
+
+#     return doc
+
 
 def route_document(document_id, from_dept, to_dept, user, remarks=""):
     with transaction.atomic():
@@ -27,7 +50,8 @@ def route_document(document_id, from_dept, to_dept, user, remarks=""):
         )
 
         return doc
-    
+
+
 def acknowledge_document(document_id, user, remarks=""):
     with transaction.atomic():
 
@@ -66,7 +90,8 @@ def acknowledge_document(document_id, user, remarks=""):
         doc.save()
 
         return doc
-    
+
+
 def reject_document(document_id, user, remarks="No documents received"):
     with transaction.atomic():
 
@@ -103,21 +128,37 @@ def reject_document(document_id, user, remarks="No documents received"):
 
         return doc
 
+
 def inbox_query(department):
-    # latest_route = RoutingHistory.objects.filter(
-    #     document=OuterRef('pk')
-    # ).order_by('-timestamp')
+    """
+    📥 Inbox Query:
+    Fetch documents currently assigned to a department
+    + attach latest routing history (computed fields)
+    """
+    latest_route = RoutingHistory.objects.filter(
+        document=OuterRef('pk')
+    ).order_by('-routed_at')
 
-    # docs = Document.objects.annotate(
-    #     last_action=Subquery(latest_route.values('action')[:1]),
-    #     last_to=Subquery(latest_route.values('to_department')[:1])
-    #     ).filter(
-    #     last_to=department,
-    #     last_action='route'
-    # )
-
-    # return docs
-
-    return Document.objects.filter(
+    docs = Document.objects.filter(
         current_department=department
+    ).annotate(
+
+        # 📌 Last action taken (route / ack / reject)
+        last_action=Subquery(
+            latest_route.values('action')[:1]
+        ),
+
+        # 📌 Department where it came from last
+        last_from_department=Coalesce(
+            Subquery(latest_route.values('from_department__name')[:1]),
+            'creator_department__name'   # fallback ONLY if no routing exists
+        ),
+
+        # 📌 Last activity timestamp
+        last_activity_time=Coalesce(
+            Subquery(latest_route.values('routed_at')[:1]),
+            'created_at'   # fallback ONLY if no routing exists
+        ),
     )
+
+    return docs

@@ -1,0 +1,71 @@
+{% extends "workflow/base.html" %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block body %}
+
+<div class="card mb-3 p-3">
+    <h2>Inbox</h2>
+    <p class="text-muted">All routed documents to your department</p>
+</div>
+
+<!-- NEW DOCUMENT FORM -->
+{% if user.is_authenticated %}
+<div class="card p-3 mb-3">
+
+    <form action="{% url 'index' %}" method="POST">
+        {% csrf_token %}
+
+        <h4>Create Document</h4>
+
+        <textarea
+            class="form-control mb-2"
+            name="content"
+            rows="3"
+            placeholder="Enter document content..."
+        ></textarea>
+
+        <button class="btn btn-primary">
+            Submit
+        </button>
+
+    </form>
+
+</div>
+{% endif %}
+
+<!-- DOCUMENT LIST (INBOX TABLE STYLE LATER) -->
+<div class="card p-2">
+    {% include "workflow/partials/documents_table.html" with page_obj=page_obj %}
+</div>
+
+<!-- PAGINATION -->
+<nav class="mt-3">
+    <ul class="pagination justify-content-center">
+
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                Previous
+            </a>
+        </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+            <span class="page-link">
+                Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                Next
+            </a>
+        </li>
+        {% endif %}
+
+    </ul>
+</nav>
+
+{% endblock %}

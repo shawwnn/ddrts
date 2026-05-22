@@ -1,0 +1,74 @@
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>PK</th>
+            <th>Title</th>
+            <th>Description</th>
+
+            <!-- Workflow state -->
+            <th>Current Dept</th>
+            <th>Last Action</th>
+            <th>Last From Dept</th>
+            <th>Last Date of Activity</th>
+
+            <th>Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for doc in page_obj %}
+        <tr>
+
+            <!-- Basic document info -->
+            <td>{{ doc.pk }}</td>
+            <td>{{ doc.title }}</td>
+            <td>{{ doc.description|truncatechars:60 }}</td>
+
+            <!-- Core workflow fields -->
+            <td>{{ doc.current_department.name }}</td>
+
+            <td>
+                {% if doc.last_action %}
+                    <span class="badge 
+                        {% if doc.last_action == 'route' %}bg-primary
+                        {% elif doc.last_action == 'ack' %}bg-success
+                        {% elif doc.last_action == 'reject' %}bg-danger
+                        {% else %}bg-secondary
+                        {% endif %}">
+                        {{ doc.last_action|title }}
+                    </span>
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </td>
+
+            <td>
+                {{ doc.last_from_department|default:"—" }}
+            </td>
+
+            <td>
+                {% if doc.last_activity_time %}
+                    {{ doc.last_activity_time|date:"Y-m-d H:i" }}
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+
+            <!-- Status from model -->
+            <td>
+                <span class="badge bg-dark">
+                    {{ doc.status|title }}
+                </span>
+            </td>
+
+        </tr>
+
+        {% empty %}
+        <tr>
+            <td colspan="8" class="text-muted p-3">
+                No documents in inbox.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

@@ -1,0 +1,92 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Routing System{% endblock %}</title>
+
+    <!-- Tabler CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+
+    <!-- Your custom styles -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body class="layout-fluid">
+
+<div class="page">
+
+    <!-- SIDEBAR -->
+    <aside class="navbar navbar-vertical navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+
+            <h1 class="navbar-brand">
+                Routing
+            </h1>
+
+            <div class="navbar-nav">
+                <a class="nav-link" href="#">
+                    logo Dashboard
+                </a>
+                <a class="nav-link" href="#">
+                    logo Create Document
+                </a>
+                <a class="nav-link" href="{% url 'index' %}">
+                    maillogo Inbox
+                </a>
+                <a class="nav-link" href="#">
+                    downllogo Needs Action
+                </a>
+
+                <a class="nav-link" href="#">
+                    uplogo Sent
+                </a>
+                <a class="nav-link" href="#">
+                    logo Search
+                </a>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="page-wrapper">
+
+        <!-- TOP BAR -->
+        <div class="navbar navbar-expand navbar-light bg-light">
+            <div class="container-fluid">
+
+                <div class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <span class="nav-item nav-link">
+                            {{ user.username }}
+                        </span>
+
+                        <a class="nav-link" href="{% url 'logout' %}">
+                            Logout
+                        </a>
+                    {% else %}
+                        <a class="nav-link" href="{% url 'login' %}">
+                            Login
+                        </a>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="container-xl mt-3">
+
+            {% block body %}
+            {% endblock %}
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
