@@ -1,4 +1,4 @@
-from django.db.models import OuterRef, Subquery, Q
+from django.db.models import Exists, OuterRef, Subquery, Q
 from django.db import transaction
 from documents.models import Document
 from workflow.models import RoutingHistory
@@ -201,6 +201,74 @@ def sent_query(department):
         ),
     ).filter(
         last_from_department=department.name
+    )
+
+    return docs
+
+
+def pending_query(department):
+
+    latest_route = RoutingHistory.objects.filter(
+        document=OuterRef('pk')
+    ).order_by('-routed_at')
+
+    docs = Document.objects.annotate(
+
+        # same UI fields you already use
+        last_action=Subquery(
+            latest_route.values('action')[:1]
+        ),
+
+        last_from_department=Coalesce(
+            Subquery(latest_route.values('from_department__name')[:1]),
+            'creator_department__name'
+        ),
+
+        last_to_department=Subquery(
+            latest_route.values('to_department__name')[:1]
+        ),
+
+        last_activity_time=Coalesce(
+            Subquery(latest_route.values('routed_at')[:1]),
+            'created_at'
+        ),
+
+        # 👇 NEW: pending detection flags
+        latest_route_to_me=Subquery(
+            RoutingHistory.objects.filter(
+                document=OuterRef('pk'),
+                action='route',
+                to_department=department
+            ).order_by('-routed_at').values('routed_at')[:1]
+        )
+    ).filter(
+        latest_route_to_me__isnull=False
+    ).exclude(
+        # EXCLUDE ACK after route
+        id__in=RoutingHistory.objects.filter(
+            document=OuterRef('pk'),
+            action='ack',
+            routed_at__gt=Subquery(
+                RoutingHistory.objects.filter(
+                    document=OuterRef('pk'),
+                    action='route',
+                    to_department=department
+                ).order_by('-routed_at').values('routed_at')[:1]
+            )
+        ).values('document')
+    ).exclude(
+        # EXCLUDE REJECT after route
+        id__in=RoutingHistory.objects.filter(
+            document=OuterRef('pk'),
+            action='reject',
+            routed_at__gt=Subquery(
+                RoutingHistory.objects.filter(
+                    document=OuterRef('pk'),
+                    action='route',
+                    to_department=department
+                ).order_by('-routed_at').values('routed_at')[:1]
+            )
+        ).values('document')
     )
 
     return docs
