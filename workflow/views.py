@@ -17,7 +17,16 @@ def index(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, "workflow/inbox.html", {
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "page_obj": page_obj,
+
+        # table behavior
+        "show_actions": True,
+
+        # workflow capabilities
+        "allowed_actions": [
+            "route",
+        ]
     })
 
 
@@ -32,7 +41,12 @@ def sent_documents(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, "workflow/sent.html", {
-        "page_obj": page_obj
+        "page_obj": page_obj,
+        "page_obj": page_obj,
+
+        # table behavior
+        "show_actions": False,
+
     })
 
 
@@ -46,5 +60,16 @@ def pending_actions(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, "workflow/pending.html", {
-        "page_obj": page_obj
+        "page_obj": page_obj,
+
+        # table behavior
+        "show_actions": True,
+
+        # workflow capabilities
+        "allowed_actions": [
+            "ack",
+            "reject",
+            "route",
+        ]
+
     })

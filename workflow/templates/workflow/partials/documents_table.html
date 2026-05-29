@@ -13,6 +13,10 @@
             <th>Last Date of Activity</th>
 
             <th>Status</th>
+            <!-- Actions header -->
+            {% if show_actions %}
+            <th>Actions</th>
+            {% endif %}
         </tr>
     </thead>
 
@@ -65,12 +69,17 @@
                     {{ doc.status|title }}
                 </span>
             </td>
-
+            <!-- Actions cell -->
+            {% if show_actions %}
+            <td>
+                {% include "workflow/partials/documents_action.html" with doc=doc allowed_actions=allowed_actions %}
+            </td>
+            {% endif %}
         </tr>
 
         {% empty %}
         <tr>
-            <td colspan="8" class="text-muted p-3">
+            <td colspan="{% if show_actions %}9{% else %}8{% endif %}">
                 No documents in inbox.
             </td>
         </tr>
