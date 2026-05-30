@@ -1,11 +1,28 @@
 {% if "ack" in allowed_actions %}
-<button class="btn btn-success btn-sm">Acknowledge</button>
+<button
+    class="btn btn-success btn-sm workflow-action"
+    data-url="{% url 'acknowledge_action' doc.id %}"
+    data-action="ack"
+>
+    Acknowledge
+</button>
 {% endif %}
 
 {% if "reject" in allowed_actions %}
-<button class="btn btn-danger btn-sm">Reject</button>
+<button
+    class="btn btn-danger btn-sm workflow-action"
+    data-url="{% url 'reject_action' doc.id %}"
+    data-action="reject"
+>
+    Reject
+</button>
 {% endif %}
 
 {% if "route" in allowed_actions %}
-<button class="btn btn-primary btn-sm">Route</button>
+<button
+    class="btn btn-primary btn-sm route-action"
+    data-doc-id="{{ doc.id }}"
+>
+    Route
+</button>
 {% endif %}

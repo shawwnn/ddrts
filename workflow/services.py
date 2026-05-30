@@ -1,5 +1,6 @@
 from django.db.models import Exists, OuterRef, Subquery, Q
 from django.db import transaction
+from accounts.models import Department
 from documents.models import Document
 from workflow.models import RoutingHistory
 from django.contrib.auth.models import User
@@ -102,21 +103,29 @@ def reject_document(document_id, user, remarks="No documents received"):
             document=doc
         ).order_by('-id').first()
 
+        # TESTDEBUG
+        # print("DOC ID:", document_id)
+        # print("LAST ROUTE:", last_route)
+        # print("LAST ACTION:", getattr(last_route, "action", None))
+        # print("TO DEPT:", getattr(last_route, "to_department", None))
+        # print("USER DEPT:", user.profile.department)
+        # print("DOC CURRENT:", doc.current_department)
+
         # SAFETY CHECK 1: must have history
         if not last_route:
             raise Exception("No routing history found")
 
         # SAFETY CHECK 2: must be routed
-        if last_route.action != 'route':
-            raise Exception("Only routed documents can be rejected")
+        if last_route.action not in ['route', 'ack']:
+            raise Exception("Document cannot be rejected in its current state")
 
         # SAFETY CHECK 3: must be for this department
         if last_route.to_department != user.profile.department:
             raise Exception("Document not routed to this department")
 
         # SAFETY CHECK 4: cannot reject already processed docs
-        if doc.current_department != user.profile.department:
-            raise Exception("Document already processed")
+        # if doc.current_department != user.profile.department:
+        #     raise Exception("Document already processed")
 
         RoutingHistory.objects.create(
             document=doc,
@@ -126,6 +135,10 @@ def reject_document(document_id, user, remarks="No documents received"):
             performed_by=user,
             remarks=remarks
         )
+
+        # update document object AFTER creating RoutingHistory (reject record)
+        doc.current_department = last_route.from_department
+        doc.save()
 
         return doc
 
@@ -145,7 +158,7 @@ def inbox_query(department):
     ).annotate(
 
         # 📌 Last action taken (route / ack / reject)
-        last_action=Subquery(
+        last_action_annotated=Subquery(
             latest_route.values('action')[:1]
         ),
 
@@ -183,7 +196,7 @@ def sent_query(department):
 
     docs = Document.objects.annotate(
 
-        last_action=Subquery(
+        last_action_annotated=Subquery(
             latest_route.values('action')[:1]
         ),
 
@@ -210,12 +223,13 @@ def pending_query(department):
 
     latest_route = RoutingHistory.objects.filter(
         document=OuterRef('pk')
-    ).order_by('-routed_at')
+    ).order_by("-routed_at", "-id")
+    # ).order_by("-last_activity_at", "-id")
 
     docs = Document.objects.annotate(
 
         # same UI fields you already use
-        last_action=Subquery(
+        last_action_annotated=Subquery(
             latest_route.values('action')[:1]
         ),
 
@@ -272,3 +286,27 @@ def pending_query(department):
     )
 
     return docs
+
+
+def submit_route_document(document_id, to_department_id, remarks, user):
+    document = Document.objects.get(id=document_id)
+    to_department = Department.objects.get(id=to_department_id)
+
+    from_department = user.profile.department
+
+    RoutingHistory.objects.create(
+        document=document,
+        from_department=from_department,
+        to_department=to_department,
+        action='route',
+        performed_by=user,
+        remarks=remarks
+    )
+
+    document.current_department = from_department
+    document.save(update_fields=["current_department"])
+
+    return {
+        "success": True,
+        "message": "Document routed successfully"
+    }

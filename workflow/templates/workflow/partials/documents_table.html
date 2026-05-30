@@ -22,7 +22,7 @@
 
     <tbody>
         {% for doc in page_obj %}
-        <tr>
+        <tr id="doc-row-{{ doc.id }}">
 
             <!-- Basic document info -->
             <td>{{ doc.pk }}</td>
@@ -86,3 +86,42 @@
         {% endfor %}
     </tbody>
 </table>
+
+<div class="modal fade" id="routeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h3 class="modal-title">Route Document</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <input type="hidden" id="routeDocumentId">
+
+        <!-- Department Dropdown -->
+        <div class="mb-3">
+          <label class="form-label">Department</label>
+          <select class="form-select" id="routeDepartmentSelect">
+            <!-- populated via JS -->
+          </select>
+        </div>
+
+        <!-- Remarks -->
+        <div class="mb-3">
+          <label class="form-label">Remarks</label>
+          <textarea class="form-control" id="routeRemarks" rows="3"></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="submitRouteBtn">
+          Route
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

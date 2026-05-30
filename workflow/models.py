@@ -13,7 +13,7 @@ class RoutingHistory(models.Model):
     ]
 
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
-    
+
     from_department = models.ForeignKey(
         Department,
         on_delete=models.SET_NULL,
