@@ -26,7 +26,12 @@
 
             <!-- Basic document info -->
             <td>{{ doc.pk }}</td>
-            <td>{{ doc.title }}</td>
+            <td>
+                <a href="{% url 'document_detail' doc.id %}" class="text-primary fw-bold text-decoration-none">
+                    {{ doc.title }}
+                </a>
+            </td>   
+            
             <td>{{ doc.description|truncatechars:60 }}</td>
 
             <!-- Core workflow fields -->

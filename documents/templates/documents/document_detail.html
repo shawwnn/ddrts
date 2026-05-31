@@ -1,0 +1,181 @@
+{% extends "workflow/base.html" %}
+
+{% block title %}Document Details{% endblock %}
+
+{% block body %}
+
+<div class="container-fluid">
+
+    <!-- ROW 1: DETAILS + ACTIONS -->
+    <div class="row mb-3">
+
+        <!-- DETAILS -->
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body">
+
+                    <h2 class="mb-1">{{ doc.title }}</h2>
+
+                    <div class="text-muted mb-3">
+                        ID: {{ doc.id }}
+                    </div>
+
+                    <p>{{ doc.description|default:"No description" }}</p>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Status</strong><br>
+                            <span class="badge bg-dark">{{ doc.status }}</span>
+                        </div>
+
+                        <div class="col-6">
+                            <strong>Current Department</strong><br>
+                            {{ doc.current_department.name }}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Created By</strong><br>
+                            {{ doc.created_by.username }}
+                        </div>
+
+                        <div class="col-6">
+                            <strong>Created At</strong><br>
+                            {{ doc.created_at }}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">Actions</h3>
+                </div>
+
+                <div class="card-body">
+
+                    <button class="btn btn-primary w-100 mb-2 route-action"
+                        data-doc-id="{{ doc.id }}">
+                        Route
+                    </button>
+
+                    <button class="btn btn-success w-100 mb-2 workflow-action"
+                        data-url="{% url 'acknowledge_action' doc.id %}"
+                        data-action="ack">
+                        Acknowledge
+                    </button>
+
+                    <button class="btn btn-danger w-100 workflow-action"
+                        data-url="{% url 'reject_action' doc.id %}"
+                        data-action="reject">
+                        Reject
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ROW 2: FILES (FULL WIDTH) -->
+    <div class="row mb-3">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Files</h3>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row">
+
+                        {% for file in doc.documentfile_set.all %}
+                            <div class="col-md-3 mb-2">
+
+                                <a href="{{ file.file.url }}" target="_blank"
+                                   class="btn btn-outline-secondary w-100">
+                                    📎 File {{ forloop.counter }}
+                                </a>
+
+                            </div>
+                        {% empty %}
+                            <span class="text-muted">No files attached</span>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ROW 3: HISTORY (FULL WIDTH) -->
+    <div class="row">
+
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Routing History</h3>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="timeline">
+
+                        {% for h in history %}
+                            <div class="mb-3 border-start ps-3">
+
+                                <div>
+                                    <strong>{{ h.action|title }}</strong>
+                                </div>
+
+                                <div class="text-muted small">
+                                    From: {{ h.from_department.name|default:"—" }}
+                                    → To: {{ h.to_department.name|default:"—" }}
+                                </div>
+
+                                <div class="text-muted small">
+                                    By: {{ h.performed_by.username }}
+                                </div>
+
+                                <div class="text-muted small">
+                                    {{ h.routed_at }}
+                                </div>
+
+                                {% if h.remarks %}
+                                    <div class="mt-1">
+                                        📝 {{ h.remarks }}
+                                    </div>
+                                {% endif %}
+
+                            </div>
+                        {% empty %}
+                            <span class="text-muted">No history yet</span>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
